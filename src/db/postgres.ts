@@ -1,3 +1,14 @@
 import { Pool } from 'pg'
 
-export const db = new Pool({connectionString: process.env.DATABASE_URL})
+const connectionString = process.env.DATABASE_URL
+
+if (!connectionString) {
+  throw new Error('Missing DATABASE_URL')
+}
+
+export const db = new Pool({
+  connectionString,
+  ssl: {
+    rejectUnauthorized: false
+  }
+})
