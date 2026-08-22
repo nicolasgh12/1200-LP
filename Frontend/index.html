@@ -16,8 +16,56 @@
           <h1>Una nueva forma de manejar tu plata.</h1>
           <p>Creá tu cuenta para empezar.</p>
         </div>
-        <p id="create-status" class="status"></p>
-        <button id="create-wallet" class="primary bottom">Crear cuenta</button>
+        <p id="create-status" class="status welcome-status"></p>
+        <div class="bottom button-stack">
+          <button id="create-wallet" class="primary">Crear cuenta nueva</button>
+          <button data-go="import-wallet">Importar con frase</button>
+        </div>
+      </section>
+
+      <section id="import-wallet" class="screen">
+        <nav>
+          <button data-back>←</button>
+          <h2>Importar cuenta</h2>
+        </nav>
+        <h1>Ingresá tu frase de recuperación</h1>
+        <p class="muted">
+          Escribí las palabras en el orden correcto, separadas por espacios.
+        </p>
+        <label>
+          Frase de recuperación
+          <textarea
+            id="seed-input"
+            rows="5"
+            autocomplete="off"
+            autocapitalize="none"
+            spellcheck="false"
+            placeholder="palabra1 palabra2 palabra3..."
+          ></textarea>
+        </label>
+        <p id="import-status" class="status"></p>
+        <button id="import-button" class="primary bottom" disabled>
+          Importar cuenta
+        </button>
+      </section>
+
+      <section id="backup" class="screen">
+        <span class="step">PASO IMPORTANTE</span>
+        <h1>Guardá tu frase de recuperación</h1>
+        <p class="muted">
+          Es la única forma de recuperar tu cuenta. No la compartas con nadie.
+        </p>
+        <div id="seed-phrase" class="seed-card"></div>
+        <div class="backup-actions">
+          <button id="copy-seed">Copiar frase</button>
+          <button id="download-seed">Descargar respaldo</button>
+        </div>
+        <p id="backup-status" class="saved-status">
+          Guardá una copia para continuar.
+        </p>
+        <button id="finish-backup" class="primary bottom" disabled>
+          Ya guardé mi frase
+        </button>
       </section>
 
       <section id="home" class="screen">
@@ -56,6 +104,10 @@
         </nav>
         <div class="card address-card">
           <small>Dirección para fondear</small>
+          <canvas
+            id="deposit-qr"
+            aria-label="Código QR de la dirección"
+          ></canvas>
           <code id="deposit-address"></code>
           <button class="primary copy-address">Copiar dirección</button>
         </div>
@@ -76,6 +128,9 @@
             autocomplete="off"
             placeholder="Ingresá la dirección"
         /></label>
+        <button class="scan-button" data-go="scan-qr">
+          ⌗ Escanear código QR
+        </button>
         <label
           >Monto en USD<input
             id="amount"
@@ -87,6 +142,25 @@
         <button id="review-payment" class="primary bottom" disabled>
           Continuar
         </button>
+      </section>
+
+      <section id="scan-qr" class="screen">
+        <nav>
+          <button data-back>←</button>
+          <h2>Escanear QR</h2>
+        </nav>
+        <div class="scanner-frame">
+          <video id="qr-video" playsinline></video>
+          <span>Ubicá el código dentro del recuadro</span>
+        </div>
+        <p id="scanner-status" class="status"></p>
+        <div class="scanner-actions">
+          <button id="start-scanner" class="primary">Activar cámara</button>
+          <label class="file-button">
+            Elegir imagen
+            <input id="qr-file" type="file" accept="image/*" />
+          </label>
+        </div>
       </section>
 
       <section id="confirm" class="screen">
@@ -139,6 +213,6 @@
         <button data-go="profile">○<span>Cuenta</span></button>
       </footer>
     </main>
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
   </body>
 </html>

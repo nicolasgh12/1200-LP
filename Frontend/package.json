@@ -6,6 +6,8 @@
     "start": "vite --host 0.0.0.0 --configLoader runner"
   },
   "devDependencies": {
+    "qr-scanner": "^1.4.2",
+    "qrcode": "^1.5.4",
     "vite": "^7.1.3"
   }
 }

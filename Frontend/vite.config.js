@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
+import * as bip39 from "bip39";
 import dotenv from "dotenv";
 import { defineConfig } from "vite";
 import {
@@ -48,14 +49,24 @@ function walletApi() {
 
         try {
           if (url.pathname === "/wallet" && request.method === "POST") {
-            const wallet = await createWallet({ network: "nile" });
+            const input = await body(request);
+            const seedPhrase = input.seedPhrase?.trim() || undefined;
+            if (seedPhrase && !bip39.validateMnemonic(seedPhrase)) {
+              return json(response, 400, {
+                error: "La frase de recuperación no es válida.",
+              });
+            }
+            const wallet = await createWallet({ network: "nile", seedPhrase });
             const sessionId = randomUUID();
             sessions.set(sessionId, wallet);
             console.log(`[wallet] Dirección creada: ${wallet.address}`);
+            response.setHeader("Cache-Control", "no-store");
             return json(response, 201, {
               sessionId,
               address: wallet.address,
               network: wallet.network,
+              imported: Boolean(seedPhrase),
+              ...(seedPhrase ? {} : { seedPhrase: wallet.seedPhrase }),
             });
           }
 
