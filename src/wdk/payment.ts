@@ -5,34 +5,34 @@ import type {
   TronWalletAccount,
   WaitForPaymentOptions
 } from './types.js'
-
-function getOnChainTransactionHash(
-  receipt: { receipt: { id?: string } | null }
-): string | null {
-  return receipt.receipt?.id ?? null
-}
+import { normalizeWdkError } from './errors.js'
+import { getOnChainTransactionHash } from './states.js'
 
 export async function sendPayment(
   account: TronWalletAccount,
   params: SendPaymentParams
 ): Promise<PaymentResult> {
-  const result = await account.transfer(
-    {
-      token: params.tokenAddress,
-      recipient: params.recipientAddress,
-      amount: params.amount
-    },
-    params.transferMaxFee === undefined
-      ? undefined
-      : {
-          transferMaxFee: params.transferMaxFee
-        }
-  )
+  try {
+    const result = await account.transfer(
+      {
+        token: params.tokenAddress,
+        recipient: params.recipientAddress,
+        amount: params.amount
+      },
+      params.transferMaxFee === undefined
+        ? undefined
+        : {
+            transferMaxFee: params.transferMaxFee
+          }
+    )
 
-  return {
-    ...result,
-    paymentId: result.hash,
-    onChainTransactionHash: null
+    return {
+      ...result,
+      paymentId: result.hash,
+      onChainTransactionHash: null
+    }
+  } catch (error) {
+    throw normalizeWdkError(error)
   }
 }
 
@@ -45,15 +45,19 @@ export async function waitForPayment(
     interval: 3_000
   }
 ): Promise<PaymentConfirmation> {
-  const receipt = await account.waitForTransaction(
-    transactionId,
-    options
-  )
+  try {
+    const receipt = await account.waitForTransaction(
+      transactionId,
+      options
+    )
 
-  return {
-    paymentId: transactionId,
-    onChainTransactionHash:
-      getOnChainTransactionHash(receipt),
-    receipt
+    return {
+      paymentId: transactionId,
+      onChainTransactionHash:
+        getOnChainTransactionHash(receipt),
+      receipt
+    }
+  } catch (error) {
+    throw normalizeWdkError(error)
   }
 }

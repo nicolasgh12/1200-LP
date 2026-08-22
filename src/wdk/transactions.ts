@@ -4,31 +4,14 @@ import {
 
 import type {
   GasfreeTransaction,
-  TransactionStatus,
   TransactionStatusResult,
   TronWalletAccount
 } from './types.js'
-
-function getOnChainTransactionHash(
-  receipt: GasfreeTransaction
-): string | null {
-  return receipt.receipt?.id ?? null
-}
-
-function mapTransactionStatus(
-  finality: string,
-  success?: boolean
-): TransactionStatus {
-  if (success === false || finality === 'dropped') {
-    return 'failed'
-  }
-
-  if (finality === 'confirmed' || finality === 'final') {
-    return 'confirmed'
-  }
-
-  return 'pending'
-}
+import { normalizeWdkError } from './errors.js'
+import {
+  getOnChainTransactionHash,
+  getTransactionState
+} from './states.js'
 
 export async function getTransactionStatus(
   account: TronWalletAccount,
@@ -49,13 +32,10 @@ export async function getTransactionStatus(
       }
     }
 
-    throw error
+    throw normalizeWdkError(error)
   }
 
-  const status = mapTransactionStatus(
-    receipt.finality,
-    receipt.success
-  )
+  const status = getTransactionState(receipt)
 
   return {
     transactionId,
