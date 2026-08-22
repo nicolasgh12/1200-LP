@@ -4,10 +4,7 @@ import type {
 } from './types.js'
 import { normalizeWdkError } from './errors.js'
 
-export async function getBalance(
-  account: TronWalletAccount,
-  tokenAddress: string
-): Promise<TokenBalance> {
+export async function getBalance(account: TronWalletAccount,tokenAddress: string): Promise<TokenBalance> {
   try {
     const balance = await account.getTokenBalance(tokenAddress)
 
@@ -15,7 +12,8 @@ export async function getBalance(
       tokenAddress,
       balance
     }
-  } catch (error) {
+  } 
+  catch (error) {
     throw normalizeWdkError(error)
   }
 }

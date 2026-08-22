@@ -8,10 +8,7 @@ import type {
 import { normalizeWdkError } from './errors.js'
 import { getOnChainTransactionHash } from './states.js'
 
-export async function sendPayment(
-  account: TronWalletAccount,
-  params: SendPaymentParams
-): Promise<PaymentResult> {
+export async function sendPayment(account: TronWalletAccount, params: SendPaymentParams): Promise<PaymentResult> {
   try {
     const result = await account.transfer(
       {
@@ -31,25 +28,18 @@ export async function sendPayment(
       paymentId: result.hash,
       onChainTransactionHash: null
     }
-  } catch (error) {
+  } 
+  catch (error) {
     throw normalizeWdkError(error)
   }
 }
 
-export async function waitForPayment(
-  account: TronWalletAccount,
-  transactionId: string,
-  options: WaitForPaymentOptions = {
+export async function waitForPayment(account: TronWalletAccount, transactionId: string, options: WaitForPaymentOptions = {
     target: 'confirmed',
     timeout: 120_000,
-    interval: 3_000
-  }
-): Promise<PaymentConfirmation> {
+    interval: 3_000}): Promise<PaymentConfirmation> {
   try {
-    const receipt = await account.waitForTransaction(
-      transactionId,
-      options
-    )
+    const receipt = await account.waitForTransaction(transactionId, options)
 
     return {
       paymentId: transactionId,
@@ -57,7 +47,8 @@ export async function waitForPayment(
         getOnChainTransactionHash(receipt),
       receipt
     }
-  } catch (error) {
+  }
+   catch (error) {
     throw normalizeWdkError(error)
   }
 }

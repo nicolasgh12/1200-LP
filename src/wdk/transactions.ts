@@ -13,15 +13,13 @@ import {
   getTransactionState
 } from './states.js'
 
-export async function getTransactionStatus(
-  account: TronWalletAccount,
-  transactionId: string
-): Promise<TransactionStatusResult> {
+export async function getTransactionStatus(account: TronWalletAccount,transactionId: string): Promise<TransactionStatusResult> {
   let receipt: GasfreeTransaction
 
   try {
     receipt = await account.getTransaction(transactionId)
-  } catch (error) {
+  } 
+  catch (error) {
     if (error instanceof NoSuchElementError) {
       return {
         transactionId,
@@ -47,9 +45,7 @@ export async function getTransactionStatus(
   }
 }
 
-export async function getTransactions(
-  _account: TronWalletAccount
-): Promise<never> {
+export async function getTransactions(_account: TronWalletAccount): Promise<never> {
   throw new Error(
     'getTransactions is not supported by the public Tron GasFree WDK account API yet.'
   )
