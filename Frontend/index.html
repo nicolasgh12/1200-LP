@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#fff7f1" />
+    <title>La Verdadera Teca</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="phone">
+      <section id="welcome" class="screen welcome active">
+        <div class="brand"><span>$</span><b>La Verdadera Teca</b></div>
+        <div class="welcome-copy">
+          <small>TU DINERO, MÁS SIMPLE</small>
+          <h1>Una nueva forma de manejar tu plata.</h1>
+          <p>Creá tu cuenta para empezar.</p>
+        </div>
+        <p id="create-status" class="status"></p>
+        <button id="create-wallet" class="primary bottom">Crear cuenta</button>
+      </section>
+
+      <section id="home" class="screen">
+        <header>
+          <div>
+            <small>Tu cuenta</small>
+            <h1>Inicio</h1>
+          </div>
+          <button class="avatar" data-go="profile">$</button>
+        </header>
+        <article class="balance">
+          <span>Saldo disponible</span>
+          <strong id="balance">—</strong>
+          <small>USD</small>
+        </article>
+        <p id="balance-status" class="status"></p>
+        <div class="actions">
+          <button class="primary" data-go="transfer">↑ Transferir</button>
+          <button data-go="deposit">↓ Depositar</button>
+        </div>
+        <button id="refresh-balance" class="wide">Actualizar saldo</button>
+        <div class="section-title">
+          <h2>Actividad</h2>
+          <button data-go="activity">Ver</button>
+        </div>
+        <div class="card empty">
+          <b>Sin movimientos disponibles</b>
+          <p>El historial aún no está soportado por WDK.</p>
+        </div>
+      </section>
+
+      <section id="deposit" class="screen">
+        <nav>
+          <button data-back>←</button>
+          <h2>Depositar</h2>
+        </nav>
+        <div class="card address-card">
+          <small>Dirección para fondear</small>
+          <code id="deposit-address"></code>
+          <button class="primary copy-address">Copiar dirección</button>
+        </div>
+        <p class="notice">
+          Esta cuenta usa la red Nile. Enviá fondos únicamente en la red
+          correspondiente.
+        </p>
+      </section>
+
+      <section id="transfer" class="screen">
+        <nav>
+          <button data-back>←</button>
+          <h2>Transferir dinero</h2>
+        </nav>
+        <label
+          >Dirección de destino<input
+            id="recipient"
+            autocomplete="off"
+            placeholder="Ingresá la dirección"
+        /></label>
+        <label
+          >Monto en USD<input
+            id="amount"
+            inputmode="decimal"
+            placeholder="0,00"
+        /></label>
+        <p>Saldo disponible: <b id="available">—</b></p>
+        <p id="transfer-error" class="status"></p>
+        <button id="review-payment" class="primary bottom" disabled>
+          Continuar
+        </button>
+      </section>
+
+      <section id="confirm" class="screen">
+        <nav>
+          <button data-back>←</button>
+          <h2>Revisá tu transferencia</h2>
+        </nav>
+        <div class="card summary">
+          <p><span>Para</span><code id="confirm-address"></code></p>
+          <p><span>Monto</span><b id="confirm-amount"></b></p>
+          <hr />
+          <p><b>Total</b><b id="confirm-total"></b></p>
+        </div>
+        <button id="send-payment" class="primary bottom">
+          Confirmar transferencia
+        </button>
+      </section>
+
+      <section id="processing" class="screen state">
+        <div class="spinner"></div>
+        <h1>Procesando transferencia...</h1>
+        <p id="processing-status">Enviando el pago.</p>
+      </section>
+
+      <section id="success" class="screen state">
+        <div class="check">✓</div>
+        <h1>Transferencia confirmada</h1>
+        <strong id="success-amount" class="big"></strong>
+        <small>ID de operación</small><code id="payment-id"></code>
+        <button class="primary bottom" data-go="home">Volver al inicio</button>
+      </section>
+
+      <section id="activity" class="screen">
+        <h1>Actividad</h1>
+        <div id="activity-result" class="card empty"><b>Cargando...</b></div>
+      </section>
+
+      <section id="profile" class="screen">
+        <h1>Mi cuenta</h1>
+        <div class="card account-data">
+          <small>Dirección</small><code id="profile-address"></code>
+          <small>Red</small><b id="profile-network"></b>
+          <button class="copy-address">Copiar dirección</button>
+        </div>
+      </section>
+
+      <footer>
+        <button class="selected" data-go="home">⌂<span>Inicio</span></button>
+        <button data-go="activity">▤<span>Actividad</span></button>
+        <button data-go="profile">○<span>Cuenta</span></button>
+      </footer>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>

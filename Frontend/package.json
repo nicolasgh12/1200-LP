@@ -1,0 +1,11 @@
+{
+  "name": "la-verdadera-teca",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "vite --host 0.0.0.0 --configLoader runner"
+  },
+  "devDependencies": {
+    "vite": "^7.1.3"
+  }
+}
