@@ -3,7 +3,9 @@ import type {
   PaymentResult,
   SendPaymentParams,
   TronWalletAccount,
-  WaitForPaymentOptions
+  WaitForPaymentOptions,
+  QuotePaymentParams,
+  PaymentQuote
 } from './types.js'
 import { normalizeWdkError } from './errors.js'
 import { getOnChainTransactionHash } from './states.js'
@@ -49,6 +51,37 @@ export async function waitForPayment(account: TronWalletAccount, transactionId: 
     }
   }
    catch (error) {
+    throw normalizeWdkError(error)
+  }
+}
+
+export async function quotePayment(
+  account: TronWalletAccount,
+  params: QuotePaymentParams
+): Promise<PaymentQuote> {
+  try {
+    const quote = await account.quoteTransfer({
+      token: params.tokenAddress,
+      recipient: params.recipientAddress,
+      amount: params.amount
+    })
+
+    const fee =
+      quote.fee ?? 0n
+
+    const activationFee =
+      quote.activationFee ?? 0n
+
+    return {
+      amount: params.amount,
+      fee,
+      activationFee,
+      total:
+        params.amount +
+        fee +
+        activationFee
+    }
+  } catch (error) {
     throw normalizeWdkError(error)
   }
 }
