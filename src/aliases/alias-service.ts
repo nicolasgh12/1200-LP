@@ -8,7 +8,7 @@ import { sendPayment } from '../wdk/payment.js'
 
 
 
-function normalizeAlias(alias: string): string {
+export function normalizeAlias(alias: string): string {
   return alias
     .trim()
     .toLowerCase()

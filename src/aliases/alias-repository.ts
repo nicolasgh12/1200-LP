@@ -1,4 +1,4 @@
-import { db } from '../postgres.js'
+import { db } from '../db/postgres.js'
 
 import type {
   UserWallet
