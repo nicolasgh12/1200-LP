@@ -74,3 +74,16 @@ export type PaymentConfirmation = {
   onChainTransactionHash: string | null
   receipt: GasfreeTransaction
 }
+
+export interface QuotePaymentParams {
+  tokenAddress: string
+  recipientAddress: string
+  amount: bigint
+}
+
+export interface PaymentQuote {
+  amount: bigint
+  fee: bigint
+  activationFee: bigint
+  total: bigint
+}

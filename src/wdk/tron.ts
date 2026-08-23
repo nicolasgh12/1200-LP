@@ -23,14 +23,11 @@ const NETWORKS = {
   }
 } as const
 
-export function createTronGasfreeConfig(
-  network: TronNetwork
-): TronGasfreeWalletConfig {
+export function createTronGasfreeConfig(network: TronNetwork): TronGasfreeWalletConfig {
 
   const networkConfig = NETWORKS[network]
 
-  const apiKey =
-    network === 'nile'
+  const apiKey = network === 'nile'
       ? process.env.GASFREE_NILE_API_KEY
       : process.env.GASFREE_MAINNET_API_KEY
 
