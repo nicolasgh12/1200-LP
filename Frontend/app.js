@@ -8,19 +8,26 @@ const money = (value) =>
 
 let currentScreen = "welcome";
 let balance = null;
+let balanceLoading = false;
+let balanceRefreshTimer = null;
+let unchangedBalanceChecks = 0;
 let paymentAmount = 0;
+let paymentRecipientAddress = "";
 let pendingSeed = "";
 let qrScanner = null;
 let wallet = {
   sessionId: sessionStorage.getItem("walletSessionId"),
   address: sessionStorage.getItem("walletAddress"),
   network: sessionStorage.getItem("walletNetwork"),
+  alias: sessionStorage.getItem("walletAlias"),
 };
 
 function saveWalletSession() {
   sessionStorage.setItem("walletSessionId", wallet.sessionId);
   sessionStorage.setItem("walletAddress", wallet.address);
   sessionStorage.setItem("walletNetwork", wallet.network);
+  if (wallet.alias) sessionStorage.setItem("walletAlias", wallet.alias);
+  else sessionStorage.removeItem("walletAlias");
 }
 
 async function api(path, options = {}) {
@@ -52,13 +59,19 @@ function go(id, push = true) {
   if (push) window.history.pushState({ screen: id }, "");
   if (id === "activity") loadActivity();
   if (["home", "deposit", "profile"].includes(id)) showWallet();
+  if (id === "home" && wallet.sessionId) scheduleBalanceRefresh(0);
+  else stopBalanceRefresh();
   scrollTo(0, 0);
 }
 
 function showWallet() {
+  $("#home-alias").textContent = wallet.alias
+    ? `@${wallet.alias}`
+    : "Tu cuenta";
   $("#deposit-address").textContent = wallet.address || "—";
   $("#profile-address").textContent = wallet.address || "—";
   $("#profile-network").textContent = wallet.network || "—";
+  $("#profile-alias").textContent = wallet.alias ? `@${wallet.alias}` : "—";
   if (wallet.address) renderDepositQr();
 }
 
@@ -79,17 +92,56 @@ async function renderDepositQr() {
 }
 
 async function loadBalance() {
-  $("#balance-status").textContent = "Consultando saldo...";
+  if (balanceLoading || !wallet.sessionId) return null;
+  balanceLoading = true;
+  if (balance === null) {
+    $("#balance-status").textContent = "Consultando saldo...";
+  }
   try {
+    const previousBalance = balance;
     const result = await api("/balance");
     balance = Number(result.balance) / 1_000_000;
     $("#balance").textContent = money(balance);
     $("#available").textContent = money(balance);
     $("#balance-status").textContent = "";
     validatePayment();
+    return previousBalance === null || previousBalance !== balance;
   } catch (error) {
     $("#balance-status").textContent = error.message;
+    return null;
+  } finally {
+    balanceLoading = false;
   }
+}
+
+function stopBalanceRefresh() {
+  clearTimeout(balanceRefreshTimer);
+  balanceRefreshTimer = null;
+}
+
+function scheduleBalanceRefresh(delay) {
+  stopBalanceRefresh();
+  if (!wallet.sessionId || currentScreen !== "home" || document.hidden) return;
+  balanceRefreshTimer = setTimeout(refreshBalanceLoop, delay);
+}
+
+async function refreshBalanceLoop() {
+  if (currentScreen !== "home" || document.hidden) return;
+
+  const changed = await loadBalance();
+  let nextDelay;
+
+  if (changed === true) {
+    unchangedBalanceChecks = 0;
+    nextDelay = 5_000;
+  } else if (changed === false) {
+    unchangedBalanceChecks += 1;
+    nextDelay = unchangedBalanceChecks >= 3 ? 30_000 : 10_000;
+  } else {
+    nextDelay = 30_000;
+  }
+
+  scheduleBalanceRefresh(nextDelay);
 }
 
 $("#create-wallet").onclick = async () => {
@@ -168,8 +220,7 @@ $("#finish-backup").onclick = async () => {
   pendingSeed = "";
   $("#seed-phrase").textContent = "";
   saveWalletSession();
-  go("home");
-  await loadBalance();
+  go("alias-setup");
 };
 
 $("#seed-input").oninput = () => {
@@ -194,11 +245,9 @@ $("#import-button").onclick = async () => {
       address: result.address,
       network: result.network,
     };
-    saveWalletSession();
     console.log("[La Verdadera Teca] Dirección importada:", result.address);
     showWallet();
-    go("home");
-    await loadBalance();
+    await continueAfterImport();
   } catch (error) {
     $("#import-status").textContent = error.message;
   } finally {
@@ -207,19 +256,82 @@ $("#import-button").onclick = async () => {
   }
 };
 
+async function continueAfterImport() {
+  saveWalletSession();
+  try {
+    const registered = await api(
+      `/alias/by-wallet?address=${encodeURIComponent(wallet.address)}`,
+    );
+    if (registered?.alias) {
+      wallet.alias = registered.alias;
+      saveWalletSession();
+      showWallet();
+      go("home");
+      return;
+    }
+    go("alias-setup");
+  } catch (error) {
+    go("alias-setup");
+    $("#alias-status").textContent = error.message;
+  }
+}
+
+$("#alias-input").oninput = () => {
+  const alias = $("#alias-input").value.trim().toLowerCase();
+  $("#alias-input").value = alias.replace(/^@/, "");
+  $("#save-alias").disabled = !/^[a-z0-9_]{3,20}$/.test(
+    $("#alias-input").value,
+  );
+  $("#alias-status").textContent = "";
+};
+
+$("#save-alias").onclick = async () => {
+  const button = $("#save-alias");
+  button.disabled = true;
+  button.textContent = "Guardando...";
+  try {
+    const result = await api("/alias", {
+      method: "POST",
+      body: JSON.stringify({ alias: $("#alias-input").value }),
+    });
+    wallet.alias = result.alias;
+    saveWalletSession();
+    showWallet();
+    go("home");
+  } catch (error) {
+    $("#alias-status").textContent = error.message;
+  } finally {
+    button.disabled = false;
+    button.textContent = "Guardar alias";
+  }
+};
+
 function validatePayment() {
   const recipient = $("#recipient").value.trim();
   paymentAmount = Number($("#amount").value.replace(",", ".")) || 0;
-  const invalidAddress = !recipient;
+  const validAddress = /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(recipient);
+  const validAlias = /^@?[a-z0-9_]{3,20}$/i.test(recipient);
   const insufficient = balance !== null && paymentAmount > balance;
-  $("#transfer-error").textContent = insufficient ? "Saldo insuficiente" : "";
+  $("#transfer-error").textContent = insufficient
+    ? "Saldo insuficiente"
+    : recipient && !validAddress && !validAlias
+      ? "Ingresá un alias o dirección válida"
+      : "";
   $("#review-payment").disabled =
-    invalidAddress || paymentAmount <= 0 || insufficient;
+    (!validAddress && !validAlias) || paymentAmount <= 0 || insufficient;
 }
 
 $("#recipient").oninput = validatePayment;
 $("#amount").oninput = validatePayment;
-$("#refresh-balance").onclick = loadBalance;
+
+window.addEventListener("focus", () => {
+  if (currentScreen === "home") scheduleBalanceRefresh(0);
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) stopBalanceRefresh();
+  else if (currentScreen === "home") scheduleBalanceRefresh(0);
+});
 
 function readQrAddress(data) {
   try {
@@ -288,11 +400,30 @@ $("#qr-file").onchange = async (event) => {
   event.target.value = "";
 };
 
-$("#review-payment").onclick = () => {
-  $("#confirm-address").textContent = $("#recipient").value.trim();
-  $("#confirm-amount").textContent = money(paymentAmount);
-  $("#confirm-total").textContent = money(paymentAmount);
-  go("confirm");
+$("#review-payment").onclick = async () => {
+  const recipient = $("#recipient").value.trim();
+  $("#review-payment").disabled = true;
+  $("#transfer-error").textContent = "Buscando destinatario...";
+  try {
+    if (/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(recipient)) {
+      paymentRecipientAddress = recipient;
+      $("#confirm-address").textContent = recipient;
+    } else {
+      const resolved = await api(
+        `/alias/resolve?alias=${encodeURIComponent(recipient)}`,
+      );
+      paymentRecipientAddress = resolved.address;
+      $("#confirm-address").textContent = `@${resolved.alias}`;
+    }
+    $("#confirm-amount").textContent = money(paymentAmount);
+    $("#confirm-total").textContent = money(paymentAmount);
+    $("#transfer-error").textContent = "";
+    go("confirm");
+  } catch (error) {
+    $("#transfer-error").textContent = error.message;
+  } finally {
+    validatePayment();
+  }
 };
 
 $("#send-payment").onclick = async () => {
@@ -301,7 +432,7 @@ $("#send-payment").onclick = async () => {
     const payment = await api("/payment", {
       method: "POST",
       body: JSON.stringify({
-        recipientAddress: $("#recipient").value.trim(),
+        recipientAddress: paymentRecipientAddress,
         amount: String(Math.round(paymentAmount * 1_000_000)),
       }),
     });
@@ -358,12 +489,21 @@ $$(".copy-address").forEach((button) => {
   };
 });
 
-if (wallet.sessionId && wallet.address) {
-  console.log("[La Verdadera Teca] Dirección activa:", wallet.address);
-  window.history.replaceState({ screen: "home" }, "");
-  go("home", false);
-  loadBalance();
-} else {
-  window.history.replaceState({ screen: "welcome" }, "");
-  go("welcome", false);
+async function boot() {
+  if (wallet.sessionId && wallet.address) {
+    console.log("[La Verdadera Teca] Dirección activa:", wallet.address);
+    if (wallet.alias) {
+      window.history.replaceState({ screen: "home" }, "");
+      go("home", false);
+    } else {
+      window.history.replaceState({ screen: "alias-setup" }, "");
+      go("alias-setup", false);
+      await continueAfterImport();
+    }
+  } else {
+    window.history.replaceState({ screen: "welcome" }, "");
+    go("welcome", false);
+  }
 }
+
+boot();

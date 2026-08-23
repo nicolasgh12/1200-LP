@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import * as bip39 from "bip39";
 import dotenv from "dotenv";
+import { Pool } from "pg";
 import { defineConfig } from "vite";
 import {
   TRON_NILE_USDT_ADDRESS,
@@ -16,6 +17,72 @@ import {
 dotenv.config({ path: resolve(import.meta.dirname, "../.env") });
 
 const sessions = new Map();
+let database;
+
+const getDatabase = () => {
+  if (!process.env.DATABASE_URL) throw new Error("Missing DATABASE_URL");
+  database ??= new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  });
+  return database;
+};
+
+const normalizeAlias = (alias = "") =>
+  String(alias ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/^@/, "");
+
+const findByAlias = async (alias) => {
+  const result = await getDatabase().query(
+    `SELECT u.alias, w.address
+     FROM users u JOIN wallet w ON w.user_alias = u.alias
+     WHERE u.alias = $1 LIMIT 1`,
+    [normalizeAlias(alias)],
+  );
+  return result.rows[0] ?? null;
+};
+
+const findByWallet = async (address) => {
+  const result = await getDatabase().query(
+    `SELECT u.alias, w.address
+     FROM users u JOIN wallet w ON w.user_alias = u.alias
+     WHERE w.address = $1 LIMIT 1`,
+    [address],
+  );
+  return result.rows[0] ?? null;
+};
+
+const registerAlias = async (alias, address) => {
+  const normalized = normalizeAlias(alias);
+  if (!/^[a-z0-9_]{3,20}$/.test(normalized)) {
+    throw new Error(
+      "El alias debe tener entre 3 y 20 letras, números o guiones bajos.",
+    );
+  }
+  if (await findByAlias(normalized))
+    throw new Error("El alias ya está en uso.");
+  const existingWallet = await findByWallet(address);
+  if (existingWallet) return existingWallet;
+
+  const client = await getDatabase().connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("INSERT INTO users (alias) VALUES ($1)", [normalized]);
+    await client.query(
+      "INSERT INTO wallet (user_alias, address) VALUES ($1, $2)",
+      [normalized, address],
+    );
+    await client.query("COMMIT");
+    return { alias: normalized, address };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+};
 const json = (response, status, data) => {
   response.statusCode = status;
   response.setHeader("Content-Type", "application/json");
@@ -73,6 +140,26 @@ function walletApi() {
           const sessionId = request.headers["x-wallet-session"];
           const wallet = sessions.get(sessionId);
           if (!wallet) return json(response, 401, { error: "Sesión inválida" });
+
+          if (url.pathname === "/alias/by-wallet" && request.method === "GET") {
+            const result = await findByWallet(url.searchParams.get("address"));
+            return json(response, 200, result);
+          }
+
+          if (url.pathname === "/alias/resolve" && request.method === "GET") {
+            const result = await findByAlias(url.searchParams.get("alias"));
+            return json(
+              response,
+              result ? 200 : 404,
+              result ?? { error: "Alias no encontrado" },
+            );
+          }
+
+          if (url.pathname === "/alias" && request.method === "POST") {
+            const input = await body(request);
+            const result = await registerAlias(input.alias, wallet.address);
+            return json(response, 201, result);
+          }
 
           if (url.pathname === "/balance" && request.method === "GET") {
             const result = await getBalance(

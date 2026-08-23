@@ -68,10 +68,36 @@
         </button>
       </section>
 
+      <section id="alias-setup" class="screen">
+        <span class="step">ÚLTIMO PASO</span>
+        <h1>Creá tu alias</h1>
+        <p class="muted">
+          Tus contactos podrán enviarte dinero usando tu alias, sin conocer tu
+          dirección.
+        </p>
+        <label class="alias-input">
+          Alias
+          <span
+            ><b>@</b
+            ><input
+              id="alias-input"
+              autocomplete="off"
+              autocapitalize="none"
+              maxlength="20"
+              placeholder="tu_alias"
+          /></span>
+        </label>
+        <p class="alias-help">Entre 3 y 20 letras, números o guiones bajos.</p>
+        <p id="alias-status" class="status"></p>
+        <button id="save-alias" class="primary bottom" disabled>
+          Guardar alias
+        </button>
+      </section>
+
       <section id="home" class="screen">
         <header>
           <div>
-            <small>Tu cuenta</small>
+            <small id="home-alias">Tu cuenta</small>
             <h1>Inicio</h1>
           </div>
           <button class="avatar" data-go="profile">$</button>
@@ -86,7 +112,6 @@
           <button class="primary" data-go="transfer">↑ Transferir</button>
           <button data-go="deposit">↓ Depositar</button>
         </div>
-        <button id="refresh-balance" class="wide">Actualizar saldo</button>
         <div class="section-title">
           <h2>Actividad</h2>
           <button data-go="activity">Ver</button>
@@ -123,10 +148,11 @@
           <h2>Transferir dinero</h2>
         </nav>
         <label
-          >Dirección de destino<input
+          >Alias o dirección de destino<input
             id="recipient"
             autocomplete="off"
-            placeholder="Ingresá la dirección"
+            autocapitalize="none"
+            placeholder="@usuario o dirección"
         /></label>
         <button class="scan-button" data-go="scan-qr">
           ⌗ Escanear código QR
@@ -201,8 +227,9 @@
       <section id="profile" class="screen">
         <h1>Mi cuenta</h1>
         <div class="card account-data">
-          <small>Dirección</small><code id="profile-address"></code>
-          <small>Red</small><b id="profile-network"></b>
+          <small>Alias</small><b id="profile-alias"></b> <small>Dirección</small
+          ><code id="profile-address"></code> <small>Red</small
+          ><b id="profile-network"></b>
           <button class="copy-address">Copiar dirección</button>
         </div>
       </section>

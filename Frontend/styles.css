@@ -108,10 +108,6 @@ small {
   background: var(--orange);
   color: #fff;
 }
-.wide {
-  width: 100%;
-  margin-top: 10px;
-}
 .bottom {
   position: absolute;
   right: 20px;
@@ -226,6 +222,29 @@ small {
 .saved-status.ready {
   color: var(--orange-dark);
   font-weight: 700;
+}
+.alias-input span {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: #fff;
+}
+.alias-input span b {
+  padding-left: 15px;
+  color: var(--orange-dark);
+  font-size: 18px;
+}
+.alias-input input {
+  margin: 0;
+  border: 0;
+  background: transparent;
+}
+.alias-help {
+  margin-top: -10px;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 header,
