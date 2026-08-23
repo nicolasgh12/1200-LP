@@ -108,6 +108,29 @@ La interfaz está conectada actualmente a Nile. No envíes tokens de otra red a 
 
 9. Abrí [http://localhost:5173](http://localhost:5173) en el navegador.
 
+## Fondear la cuenta con USDT de prueba desde Nileex
+
+Relay usa el mismo token USDT de Nile que entrega el faucet de Nileex, por lo que podés fondear una wallet nueva sin comprar activos reales:
+
+1. En Relay, creá o importá una cuenta y terminá el registro del alias.
+2. Entrá en **Depositar** y copiá la dirección de la wallet. Verificá que la aplicación indique la red `nile` y que la dirección empiece con `T`.
+3. Abrí el [faucet de Nileex](https://nileex.io/join/getJoinPage).
+4. Bajá hasta la sección **Get 1000 USDT test tokens**. No uses las secciones de BTT, JST, USDJ, TRN o WIN.
+5. Antes de continuar, comprobá que Nileex muestre este contrato TRC-20:
+
+   ```text
+   TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf
+   ```
+
+   Debe coincidir con el token configurado por Relay. Si la dirección fuera diferente, no solicites los fondos: la aplicación no mostraría ese otro token en el saldo.
+
+6. Pegá la dirección copiada desde Relay en **Account Address**, completá la verificación humana y presioná **Obtain**.
+7. Esperá unos segundos y volvé a Relay. El saldo se actualiza automáticamente; también podés comprobar la dirección y la transferencia en [Nile TronScan](https://nile.tronscan.org/).
+
+Nileex limita cada solicitud por wallet e IP, normalmente a una por token cada 24 horas. La cantidad disponible puede cambiar, así que tomá como válida la que muestre el faucet. Para este flujo gas-free sólo necesitás el USDT de prueba: no hace falta fondear la wallet con TRX.
+
+> Los tokens de Nile no tienen valor económico y sólo sirven para pruebas. Usá una wallet creada específicamente para testnet y nunca pegues una frase semilla o clave privada en el faucet: Nileex sólo necesita la dirección pública.
+
 ## Cómo probar el flujo completo
 
 1. Seleccioná **Crear cuenta nueva**.
@@ -170,4 +193,6 @@ Frontend (Vite)
 - [Consigna del WDK Track](https://hacki.crecimiento.build/h/aleph-hackathon-2026/tracks/wdk-track)
 - [Documentación de WDK](https://docs.wdk.tether.io/)
 - [Wallet TRON GasFree](https://docs.wdk.tether.io/sdk/wallet-modules/wallet-tron-gasfree/)
+- [Guía oficial de TRON para obtener tokens de testnet](https://developers.tron.network/docs/getting-testnet-tokens-on-tron)
+- [Faucet de Nileex](https://nileex.io/join/getJoinPage)
 - [Repositorio oficial de WDK](https://github.com/tetherto/wdk)
