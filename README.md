@@ -1,6 +1,6 @@
 # Relay
 
-Relay es una billetera web de pagos en USD para el **WDK Track — Gasless** del Aleph Hackathon 2026. Usa Tether WDK sobre TRON Nile para crear o importar una wallet, consultar su saldo y transferir un token TRC-20 sin que la persona tenga que mantener TRX para pagar gas.
+Relay es una billetera web de pagos en USD para el **WDK Track — Gasless** del Aleph Hackathon 2026. Está construida sobre el **Wallet Development Kit (WDK) general de Tether** (`@tetherto/wdk`) y usa sus módulos oficiales de wallet gas-free sobre TRON Nile para crear o importar una wallet, consultar su saldo y transferir un token TRC-20 sin que la persona tenga que mantener TRX para pagar gas.
 
 La experiencia agrega alias (`@usuario`) y códigos QR para evitar que el usuario tenga que copiar direcciones de blockchain.
 
@@ -146,10 +146,13 @@ Las sesiones de wallet se guardan solamente en memoria. Si reiniciás el servido
 
 ## Integración con WDK
 
-Este proyecto participa en el Track 2 y utiliza el módulo gas-free de TRON como parte central del flujo de pagos:
+Este proyecto participa en el Track 2 y está construido dentro del ecosistema modular de **Tether WDK (`@tetherto/wdk`)**. La implementación no importa directamente el paquete general: consume la capa de wallet de WDK mediante sus paquetes oficiales `@tetherto/wdk-wallet` y `@tetherto/wdk-wallet-tron-gasfree`. El módulo gas-free de TRON es una parte central del producto, no una integración auxiliar.
 
-| Paquete | Versión | Uso |
+Componentes WDK declarados y paquetes instalados:
+
+| Componente | Versión | Uso |
 | --- | --- | --- |
+| `@tetherto/wdk` | Toolkit general | Wallet Development Kit y arquitectura modular sobre la que se construye Relay; no se importa como dependencia directa. |
 | `@tetherto/wdk-wallet` | `1.0.0-beta.17` | Tipos, estados y errores base de wallet y transacciones. |
 | `@tetherto/wdk-wallet-tron-gasfree` | `1.0.0-beta.9` | Wallet TRON gas-free, consulta de saldo, cotización y transferencias. |
 
