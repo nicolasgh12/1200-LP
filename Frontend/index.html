@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#fff7f1" />
+    <title>1200LP</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="phone">
+      <section id="welcome" class="screen welcome active">
+        <div class="brand"><span>$</span><b>1200LP</b></div>
+        <div class="welcome-copy">
+          <small>TU DINERO, MÁS SIMPLE</small>
+          <h1>Una nueva forma de manejar tu plata.</h1>
+          <p>Creá tu cuenta para empezar.</p>
+        </div>
+        <p id="create-status" class="status welcome-status"></p>
+        <div class="bottom button-stack">
+          <button id="create-wallet" class="primary">Crear cuenta nueva</button>
+          <button data-go="import-wallet">Importar con frase semilla</button>
+        </div>
+      </section>
+
+      <section id="import-wallet" class="screen">
+        <nav>
+          <button data-back>←</button>
+          <h2>Importar cuenta</h2>
+        </nav>
+        <h1>Ingresá tu frase de recuperación</h1>
+        <p class="muted">
+          Escribí las palabras en el orden correcto, separadas por espacios.
+        </p>
+        <label>
+          Frase de recuperación
+          <textarea
+            id="seed-input"
+            rows="5"
+            autocomplete="off"
+            autocapitalize="none"
+            spellcheck="false"
+            placeholder="palabra1 palabra2 palabra3..."
+          ></textarea>
+        </label>
+        <p id="import-status" class="status"></p>
+        <button id="import-button" class="primary bottom" disabled>
+          Importar cuenta
+        </button>
+      </section>
+
+      <section id="backup" class="screen">
+        <span class="step">PASO IMPORTANTE</span>
+        <h1>Guardá tu frase de recuperación</h1>
+        <p class="muted">
+          Es la única forma de recuperar tu cuenta. No la compartas con nadie.
+        </p>
+        <div id="seed-phrase" class="seed-card"></div>
+        <div class="backup-actions">
+          <button id="copy-seed">Copiar frase</button>
+          <button id="download-seed">Descargar respaldo</button>
+        </div>
+        <p id="backup-status" class="saved-status">
+          Guardá una copia para continuar.
+        </p>
+        <button id="finish-backup" class="primary bottom" disabled>
+          Ya guardé mi frase
+        </button>
+      </section>
+
+      <section id="alias-setup" class="screen">
+        <span class="step">ÚLTIMO PASO</span>
+        <h1>Creá tu alias</h1>
+        <p class="muted">
+          Tus contactos podrán enviarte dinero usando tu alias, sin conocer tu
+          dirección.
+        </p>
+        <label class="alias-input">
+          Alias
+          <span
+            ><b>@</b
+            ><input
+              id="alias-input"
+              autocomplete="off"
+              autocapitalize="none"
+              maxlength="20"
+              placeholder="tu_alias"
+          /></span>
+        </label>
+        <p class="alias-help">Entre 3 y 20 letras, números o guiones bajos.</p>
+        <p id="alias-status" class="status"></p>
+        <button id="save-alias" class="primary bottom" disabled>
+          Guardar alias
+        </button>
+      </section>
+
+      <section id="home" class="screen">
+        <header>
+          <div>
+            <small id="home-alias">Tu cuenta</small>
+            <h1>Inicio</h1>
+          </div>
+          <button class="avatar" data-go="profile">$</button>
+        </header>
+        <article class="balance">
+          <span>Saldo disponible</span>
+          <strong id="balance">—</strong>
+          <small>USD</small>
+        </article>
+        <p id="balance-status" class="status"></p>
+        <div class="actions">
+          <button class="primary" data-go="transfer">↑ Transferir</button>
+          <button data-go="deposit">↓ Depositar</button>
+        </div>
+        <div class="section-title">
+          <h2>Actividad</h2>
+          <button data-go="activity">Ver</button>
+        </div>
+        <div id="home-activity-result" class="card empty">
+          <b>Cargando movimientos...</b>
+        </div>
+      </section>
+
+      <section id="deposit" class="screen">
+        <nav>
+          <button data-back>←</button>
+          <h2>Depositar</h2>
+        </nav>
+        <div class="card address-card">
+          <small>Dirección para fondear</small>
+          <canvas
+            id="deposit-qr"
+            aria-label="Código QR de la dirección"
+          ></canvas>
+          <code id="deposit-address"></code>
+          <button class="primary copy-address">Copiar dirección</button>
+        </div>
+        <p class="notice">
+          Esta cuenta usa la red Nile. Enviá fondos únicamente en la red
+          correspondiente.
+        </p>
+      </section>
+
+      <section id="transfer" class="screen">
+        <nav>
+          <button data-back>←</button>
+          <h2>Transferir dinero</h2>
+        </nav>
+        <label
+          >Alias o dirección de destino<input
+            id="recipient"
+            autocomplete="off"
+            autocapitalize="none"
+            placeholder="@usuario o dirección"
+        /></label>
+        <button class="scan-button" data-go="scan-qr">
+          ⌗ Escanear código QR
+        </button>
+        <label
+          >Monto en USD<input
+            id="amount"
+            inputmode="decimal"
+            placeholder="0,00"
+        /></label>
+        <p>Saldo disponible: <b id="available">—</b></p>
+        <p id="transfer-error" class="status"></p>
+        <button id="review-payment" class="primary bottom" disabled>
+          Continuar
+        </button>
+      </section>
+
+      <section id="scan-qr" class="screen">
+        <nav>
+          <button data-back>←</button>
+          <h2>Escanear QR</h2>
+        </nav>
+        <div class="scanner-frame">
+          <video id="qr-video" playsinline></video>
+          <span>Ubicá el código dentro del recuadro</span>
+        </div>
+        <p id="scanner-status" class="status"></p>
+        <div class="scanner-actions">
+          <button id="start-scanner" class="primary">Activar cámara</button>
+          <label class="file-button">
+            Elegir imagen
+            <input id="qr-file" type="file" accept="image/*" />
+          </label>
+        </div>
+      </section>
+
+      <section id="confirm" class="screen">
+        <nav>
+          <button data-back>←</button>
+          <h2>Revisá tu transferencia</h2>
+        </nav>
+        <div class="card summary">
+          <p><span>Para</span><code id="confirm-address"></code></p>
+          <p><span>Monto</span><b id="confirm-amount"></b></p>
+          <p><span>Costo de servicio</span><b id="confirm-service-cost"></b></p>
+          <hr />
+          <p class="recipient-total">
+            <b id="confirm-recipient-label">El destinatario recibirá</b>
+            <b id="confirm-recipient-amount"></b>
+          </p>
+        </div>
+        <button id="send-payment" class="primary bottom">
+          Confirmar transferencia
+        </button>
+      </section>
+
+      <section id="processing" class="screen state">
+        <div class="spinner"></div>
+        <h1>Procesando transferencia...</h1>
+        <p id="processing-status">Enviando el pago.</p>
+      </section>
+
+      <section id="success" class="screen state">
+        <div class="check">✓</div>
+        <h1>Transferencia confirmada</h1>
+        <strong id="success-amount" class="big"></strong>
+        <small>ID de operación</small><code id="payment-id"></code>
+        <button class="primary bottom" data-go="home">Volver al inicio</button>
+      </section>
+
+      <section id="activity" class="screen">
+        <h1>Actividad</h1>
+        <div id="activity-result" class="card empty"><b>Cargando...</b></div>
+      </section>
+
+      <section id="profile" class="screen">
+        <h1>Mi cuenta</h1>
+        <div class="card account-data">
+          <small>Alias</small><b id="profile-alias"></b>
+          <small>Dirección</small><code id="profile-address"></code>
+          <small>Red</small><b id="profile-network"></b>
+          <button class="copy-address">Copiar dirección</button>
+          <button data-go="import-wallet">Importar otra cuenta</button>
+        </div>
+      </section>
+
+      <footer>
+        <button class="selected" data-go="home">⌂<span>Inicio</span></button>
+        <button data-go="activity">▤<span>Actividad</span></button>
+        <button data-go="profile">○<span>Cuenta</span></button>
+      </footer>
+    </main>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
