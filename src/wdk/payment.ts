@@ -55,10 +55,7 @@ export async function waitForPayment(account: TronWalletAccount, transactionId: 
   }
 }
 
-export async function quotePayment(
-  account: TronWalletAccount,
-  params: QuotePaymentParams
-): Promise<PaymentQuote> {
+export async function quotePayment(account: TronWalletAccount, params: QuotePaymentParams): Promise<PaymentQuote> {
   try {
     const quote = await account.quoteTransfer({
       token: params.tokenAddress,

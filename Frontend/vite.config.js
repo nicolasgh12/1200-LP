@@ -16,6 +16,9 @@ import {
 
 dotenv.config({ path: resolve(import.meta.dirname, "../.env") });
 
+const cloudflareAllowedHosts =
+  process.env.CLOUDFLARE_TUNNEL === "1" ? [".trycloudflare.com"] : [];
+
 const { getActivity, recordPayment } = await import(
   "../src/transactions/index.ts"
 );
@@ -275,4 +278,9 @@ function walletApi() {
   };
 }
 
-export default defineConfig({ plugins: [walletApi()] });
+export default defineConfig({
+  plugins: [walletApi()],
+  server: {
+    allowedHosts: cloudflareAllowedHosts,
+  },
+});
