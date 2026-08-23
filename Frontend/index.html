@@ -4,13 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#fff7f1" />
-    <title>La Verdadera Teca</title>
+    <title>1200LP</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="phone">
       <section id="welcome" class="screen welcome active">
-        <div class="brand"><span>$</span><b>La Verdadera Teca</b></div>
+        <div class="brand"><span>$</span><b>1200LP</b></div>
         <div class="welcome-copy">
           <small>TU DINERO, MÁS SIMPLE</small>
           <h1>Una nueva forma de manejar tu plata.</h1>
@@ -19,7 +19,7 @@
         <p id="create-status" class="status welcome-status"></p>
         <div class="bottom button-stack">
           <button id="create-wallet" class="primary">Crear cuenta nueva</button>
-          <button data-go="import-wallet">Importar con frase</button>
+          <button data-go="import-wallet">Importar con frase semilla</button>
         </div>
       </section>
 
@@ -197,8 +197,12 @@
         <div class="card summary">
           <p><span>Para</span><code id="confirm-address"></code></p>
           <p><span>Monto</span><b id="confirm-amount"></b></p>
+          <p><span>Costo de servicio</span><b id="confirm-service-cost"></b></p>
           <hr />
-          <p><b>Total</b><b id="confirm-total"></b></p>
+          <p class="recipient-total">
+            <b id="confirm-recipient-label">El destinatario recibirá</b>
+            <b id="confirm-recipient-amount"></b>
+          </p>
         </div>
         <button id="send-payment" class="primary bottom">
           Confirmar transferencia
@@ -227,10 +231,11 @@
       <section id="profile" class="screen">
         <h1>Mi cuenta</h1>
         <div class="card account-data">
-          <small>Alias</small><b id="profile-alias"></b> <small>Dirección</small
-          ><code id="profile-address"></code> <small>Red</small
-          ><b id="profile-network"></b>
+          <small>Alias</small><b id="profile-alias"></b>
+          <small>Dirección</small><code id="profile-address"></code>
+          <small>Red</small><b id="profile-network"></b>
           <button class="copy-address">Copiar dirección</button>
+          <button data-go="import-wallet">Importar otra cuenta</button>
         </div>
       </section>
 

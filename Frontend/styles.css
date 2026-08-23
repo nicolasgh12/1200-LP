@@ -400,6 +400,17 @@ nav button {
   max-width: 65%;
   text-align: right;
 }
+.summary .recipient-total {
+  align-items: flex-end;
+}
+.summary .recipient-total b:first-child {
+  max-width: 65%;
+  color: var(--orange-dark);
+  line-height: 1.35;
+}
+.summary .recipient-total b:last-child {
+  font-size: 20px;
+}
 .summary hr {
   width: 100%;
   border: 0;

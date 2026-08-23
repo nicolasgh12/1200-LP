@@ -13,6 +13,10 @@ let balanceRefreshTimer = null;
 let unchangedBalanceChecks = 0;
 let paymentAmount = 0;
 let paymentRecipientAddress = "";
+let paymentRecipientLabel = "";
+let paymentNetAmount = 0;
+let paymentNetBaseUnits = "0";
+let paymentFeeBaseUnits = "0";
 let pendingSeed = "";
 let qrScanner = null;
 let wallet = {
@@ -407,16 +411,42 @@ $("#review-payment").onclick = async () => {
   try {
     if (/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(recipient)) {
       paymentRecipientAddress = recipient;
+      paymentRecipientLabel = "El destinatario";
       $("#confirm-address").textContent = recipient;
     } else {
       const resolved = await api(
         `/alias/resolve?alias=${encodeURIComponent(recipient)}`,
       );
       paymentRecipientAddress = resolved.address;
-      $("#confirm-address").textContent = `@${resolved.alias}`;
+      paymentRecipientLabel = `@${resolved.alias}`;
+      $("#confirm-address").textContent = paymentRecipientLabel;
     }
+
+    $("#transfer-error").textContent = "Calculando costo de servicio...";
+    const totalBaseUnits = BigInt(Math.round(paymentAmount * 1_000_000));
+    const quote = await api("/payment/quote", {
+      method: "POST",
+      body: JSON.stringify({
+        recipientAddress: paymentRecipientAddress,
+        amount: totalBaseUnits.toString(),
+      }),
+    });
+    const feeBaseUnits = BigInt(quote.fee);
+    const netBaseUnits = totalBaseUnits - feeBaseUnits;
+    if (netBaseUnits <= 0n) {
+      throw new Error("El monto debe ser mayor al costo de servicio.");
+    }
+
+    paymentFeeBaseUnits = feeBaseUnits.toString();
+    paymentNetBaseUnits = netBaseUnits.toString();
+    paymentNetAmount = Number(netBaseUnits) / 1_000_000;
     $("#confirm-amount").textContent = money(paymentAmount);
-    $("#confirm-total").textContent = money(paymentAmount);
+    $("#confirm-service-cost").textContent = money(
+      Number(feeBaseUnits) / 1_000_000,
+    );
+    $("#confirm-recipient-label").textContent =
+      `${paymentRecipientLabel} recibirá`;
+    $("#confirm-recipient-amount").textContent = money(paymentNetAmount);
     $("#transfer-error").textContent = "";
     go("confirm");
   } catch (error) {
@@ -433,7 +463,8 @@ $("#send-payment").onclick = async () => {
       method: "POST",
       body: JSON.stringify({
         recipientAddress: paymentRecipientAddress,
-        amount: String(Math.round(paymentAmount * 1_000_000)),
+        amount: paymentNetBaseUnits,
+        transferMaxFee: paymentFeeBaseUnits,
       }),
     });
     $("#processing-status").textContent = "Verificando el estado...";
@@ -445,7 +476,7 @@ $("#send-payment").onclick = async () => {
       method: "POST",
       body: JSON.stringify({ transactionId: payment.paymentId }),
     });
-    $("#success-amount").textContent = money(paymentAmount);
+    $("#success-amount").textContent = money(paymentNetAmount);
     $("#payment-id").textContent =
       confirmation.onChainTransactionHash || confirmation.paymentId;
     go("success");

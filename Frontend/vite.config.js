@@ -10,6 +10,7 @@ import {
   getBalance,
   getTransactionStatus,
   getTransactions,
+  quotePayment,
   sendPayment,
   waitForPayment,
 } from "../src/wdk/index.ts";
@@ -169,12 +170,25 @@ function walletApi() {
             return json(response, 200, result);
           }
 
+          if (url.pathname === "/payment/quote" && request.method === "POST") {
+            const input = await body(request);
+            const result = await quotePayment(wallet.account, {
+              recipientAddress: input.recipientAddress,
+              tokenAddress: TRON_NILE_USDT_ADDRESS,
+              amount: BigInt(input.amount),
+            });
+            return json(response, 200, result);
+          }
+
           if (url.pathname === "/payment" && request.method === "POST") {
             const input = await body(request);
             const result = await sendPayment(wallet.account, {
               recipientAddress: input.recipientAddress,
               tokenAddress: TRON_NILE_USDT_ADDRESS,
               amount: BigInt(input.amount),
+              transferMaxFee: input.transferMaxFee
+                ? BigInt(input.transferMaxFee)
+                : undefined,
             });
             return json(response, 201, result);
           }
