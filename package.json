@@ -5,9 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test:wdk": "tsx scripts/test-wrapper.ts",
-    "test:wrapper": "tsx scripts/test-wrapper.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "start": "npm --prefix Frontend start"
   },
   "repository": {
     "type": "git",
@@ -21,14 +20,8 @@
   },
   "homepage": "https://github.com/nicolasgh12/1200-LP#readme",
   "dependencies": {
-    "@solana/kora": "^0.2.1",
-    "@supabase/supabase-js": "^2.112.3",
-    "@tetherto/wdk": "^1.0.0-beta.16",
-    "@tetherto/wdk-protocol-fiat-moonpay": "^1.0.0-beta.3",
-    "@tetherto/wdk-wallet-evm-erc-4337": "^1.0.0-beta.16",
-    "@tetherto/wdk-wallet-solana-gasless": "^1.0.0-beta.4",
-    "@tetherto/wdk-wallet-tron": "^1.0.0-beta.11",
-    "@tetherto/wdk-wallet-tron-gasfree": "^1.0.0-beta.9",
+    "@tetherto/wdk-wallet": "1.0.0-beta.17",
+    "@tetherto/wdk-wallet-tron-gasfree": "1.0.0-beta.9",
     "bip39": "^3.1.0",
     "dotenv": "^17.4.2",
     "pg": "^8.23.0"
