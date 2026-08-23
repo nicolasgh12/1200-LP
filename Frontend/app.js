@@ -32,6 +32,7 @@ let homeActivityLoading = false
 let homeActivityLoaded = false
 let homeActivityRefreshTimer = null
 let lastHomeActivityRefresh = 0
+let qrResultPending = false
 const pendingPayment = {
   amount: 0,
   recipientAddress: '',
@@ -362,17 +363,35 @@ function validatePayment() {
     insufficient
 }
 
-function useScannedQr(data) {
+async function useScannedQr(data) {
+  if (qrResultPending) return
+
   const address = readQrAddress(data)
   if (!/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(address)) {
     $('#scanner-status').textContent =
       'El código no contiene una dirección válida.'
     return
   }
-  $('#recipient').value = address
-  validatePayment()
-  stopQrScanner()
-  window.history.back()
+
+  qrResultPending = true
+  await stopQrScanner()
+  $('#scanner-status').textContent = 'Buscando alias...'
+
+  try {
+    const registered = await identifyWallet(address)
+    if (!registered?.alias) {
+      throw new Error('La cuenta escaneada no tiene un alias registrado.')
+    }
+    $('#recipient').value = `@${registered.alias}`
+    validatePayment()
+    window.history.back()
+  } catch (error) {
+    if (!recoverExpiredSession(error)) {
+      $('#scanner-status').textContent = error.message
+    }
+  } finally {
+    qrResultPending = false
+  }
 }
 
 async function activateQrScanner() {
@@ -395,7 +414,7 @@ async function scanSelectedQrImage(event) {
   if (!file) return
   $('#scanner-status').textContent = 'Leyendo código...'
   try {
-    useScannedQr(await scanQrImage(file))
+    await useScannedQr(await scanQrImage(file))
   } catch {
     $('#scanner-status').textContent =
       'No encontramos un código QR válido en la imagen.'
