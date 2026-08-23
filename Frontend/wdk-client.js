@@ -8,7 +8,11 @@ async function request(path, options = {}) {
     },
   });
   const result = await response.json();
-  if (!response.ok) throw new Error(result.error || "La operación falló");
+  if (!response.ok) {
+    const error = new Error(result.error || "La operación falló");
+    error.status = response.status;
+    throw error;
+  }
   return result;
 }
 

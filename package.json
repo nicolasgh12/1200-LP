@@ -22,7 +22,9 @@
   "homepage": "https://github.com/nicolasgh12/1200-LP#readme",
   "dependencies": {
     "@solana/kora": "^0.2.1",
+    "@supabase/supabase-js": "^2.112.3",
     "@tetherto/wdk": "^1.0.0-beta.16",
+    "@tetherto/wdk-protocol-fiat-moonpay": "^1.0.0-beta.3",
     "@tetherto/wdk-wallet-evm-erc-4337": "^1.0.0-beta.16",
     "@tetherto/wdk-wallet-solana-gasless": "^1.0.0-beta.4",
     "@tetherto/wdk-wallet-tron": "^1.0.0-beta.11",

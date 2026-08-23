@@ -9,7 +9,6 @@ import {
   createWallet,
   getBalance,
   getTransactionStatus,
-  getTransactions,
   quotePayment,
   sendPayment,
   waitForPayment,
@@ -17,7 +16,12 @@ import {
 
 dotenv.config({ path: resolve(import.meta.dirname, "../.env") });
 
+const { getActivity, recordPayment } = await import(
+  "../src/transactions/index.ts"
+);
+
 const sessions = new Map();
+const pendingPayments = new Map();
 let database;
 
 const getDatabase = () => {
@@ -172,6 +176,11 @@ function walletApi() {
 
           if (url.pathname === "/payment/quote" && request.method === "POST") {
             const input = await body(request);
+            if (input.recipientAddress === wallet.address) {
+              return json(response, 400, {
+                error: "No podés transferirte dinero a tu propia cuenta",
+              });
+            }
             const result = await quotePayment(wallet.account, {
               recipientAddress: input.recipientAddress,
               tokenAddress: TRON_NILE_USDT_ADDRESS,
@@ -182,6 +191,11 @@ function walletApi() {
 
           if (url.pathname === "/payment" && request.method === "POST") {
             const input = await body(request);
+            if (input.recipientAddress === wallet.address) {
+              return json(response, 400, {
+                error: "No podés transferirte dinero a tu propia cuenta",
+              });
+            }
             const result = await sendPayment(wallet.account, {
               recipientAddress: input.recipientAddress,
               tokenAddress: TRON_NILE_USDT_ADDRESS,
@@ -189,6 +203,12 @@ function walletApi() {
               transferMaxFee: input.transferMaxFee
                 ? BigInt(input.transferMaxFee)
                 : undefined,
+            });
+            pendingPayments.set(result.paymentId, {
+              senderAddress: wallet.address,
+              recipientAddress: input.recipientAddress,
+              amount: BigInt(input.amount),
+              fee: input.transferMaxFee ? BigInt(input.transferMaxFee) : 0n,
             });
             return json(response, 201, result);
           }
@@ -207,11 +227,39 @@ function walletApi() {
               wallet.account,
               input.transactionId,
             );
+
+            const pendingPayment = pendingPayments.get(input.transactionId);
+            if (pendingPayment) {
+              try {
+                const user = await findByWallet(wallet.address);
+                if (!user) throw new Error("La wallet no tiene alias");
+                await recordPayment({
+                  userAlias: user.alias,
+                  paymentId: input.transactionId,
+                  blockchainHash: result.onChainTransactionHash,
+                  tokenAddress: TRON_NILE_USDT_ADDRESS,
+                  ...pendingPayment,
+                });
+                pendingPayments.delete(input.transactionId);
+              } catch (error) {
+                console.error(
+                  `[wallet] No se pudo guardar ${input.transactionId}:`,
+                  error,
+                );
+              }
+            }
+
             return json(response, 200, result);
           }
 
           if (url.pathname === "/transactions" && request.method === "GET") {
-            const result = await getTransactions(wallet.account);
+            const user = await findByWallet(wallet.address);
+            if (!user) {
+              return json(response, 404, {
+                error: "La wallet no tiene un alias registrado",
+              });
+            }
+            const result = await getActivity(user.alias);
             return json(response, 200, result);
           }
 

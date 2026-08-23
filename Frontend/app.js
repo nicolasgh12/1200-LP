@@ -28,6 +28,10 @@ let balance = null
 let balanceLoading = false
 let balanceRefreshTimer = null
 let unchangedBalanceChecks = 0
+let homeActivityLoading = false
+let homeActivityLoaded = false
+let homeActivityRefreshTimer = null
+let lastHomeActivityRefresh = 0
 const pendingPayment = {
   amount: 0,
   recipientAddress: '',
@@ -52,7 +56,32 @@ function saveWalletSession() {
   else sessionStorage.removeItem('walletAlias')
 }
 
+function resetHomeActivity() {
+  clearTimeout(homeActivityRefreshTimer)
+  homeActivityLoaded = false
+  lastHomeActivityRefresh = 0
+  const container = $('#home-activity-result')
+  container.className = 'card empty'
+  container.innerHTML = '<b>Cargando movimientos...</b>'
+}
+
+function recoverExpiredSession(error) {
+  if (error.status !== 401) return false
+
+  wallet.sessionId = null
+  sessionStorage.removeItem('walletSessionId')
+  stopBalanceRefresh()
+  $('#seed-input').value = ''
+  validateSeedInput()
+  $('#import-status').textContent =
+    'La sesión venció al reiniciar el servidor. Importá nuevamente tu frase semilla para continuar.'
+  window.history.replaceState({ screen: 'import-wallet' }, '')
+  go('import-wallet', false)
+  return true
+}
+
 function go(id, push = true) {
+  if (id === 'home' && currentScreen !== 'home') lastHomeActivityRefresh = 0
   if (currentScreen === 'scan-qr' && id !== 'scan-qr') stopQrScanner()
   $$('.screen').forEach((screen) =>
     screen.classList.toggle('active', screen.id === id)
@@ -86,6 +115,7 @@ async function loadBalance() {
   balanceLoading = true
   if (balance === null) {
     $('#balance-status').textContent = 'Consultando saldo...'
+    $('#balance-status').classList.add('loading')
   }
   try {
     const previousBalance = balance
@@ -94,9 +124,12 @@ async function loadBalance() {
     $('#balance').textContent = money(balance)
     $('#available').textContent = money(balance)
     $('#balance-status').textContent = ''
+    $('#balance-status').classList.remove('loading')
     validatePayment()
     return previousBalance === null || previousBalance !== balance
   } catch (error) {
+    if (recoverExpiredSession(error)) return null
+    $('#balance-status').classList.remove('loading')
     $('#balance-status').textContent = error.message
     return null
   } finally {
@@ -118,7 +151,23 @@ function scheduleBalanceRefresh(delay) {
 async function refreshBalanceLoop() {
   if (currentScreen !== 'home' || document.hidden) return
 
+  const hadBalance = balance !== null
   const changed = await loadBalance()
+  const activityExpired = Date.now() - lastHomeActivityRefresh >= 60_000
+
+  if (
+    currentScreen === 'home' &&
+    (!homeActivityLoaded || changed === true || activityExpired)
+  ) {
+    await loadHomeActivity()
+  }
+
+  if (hadBalance && changed === true) {
+    clearTimeout(homeActivityRefreshTimer)
+    homeActivityRefreshTimer = setTimeout(() => {
+      if (currentScreen === 'home' && !document.hidden) loadHomeActivity()
+    }, 3_000)
+  }
   let nextDelay
 
   if (changed === true) {
@@ -143,6 +192,7 @@ async function createNewWallet() {
   try {
     const result = await createWallet()
     wallet = result
+    resetHomeActivity()
     pendingSeed = result.seedPhrase
     console.log('[La Verdadera Teca] Dirección creada:', result.address)
     showWallet()
@@ -229,6 +279,7 @@ async function importWallet() {
       address: result.address,
       network: result.network
     }
+    resetHomeActivity()
     console.log('[La Verdadera Teca] Dirección importada:', result.address)
     showWallet()
     await continueAfterImport()
@@ -288,14 +339,27 @@ function validatePayment() {
   pendingPayment.amount = Number($('#amount').value.replace(',', '.')) || 0
   const validAddress = /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(recipient)
   const validAlias = /^@?[a-z0-9_]{3,20}$/i.test(recipient)
+  const ownAddress = validAddress && recipient === wallet.address
+  const ownAlias =
+    validAlias &&
+    wallet.alias &&
+    recipient.replace(/^@/, '').toLowerCase() === wallet.alias.toLowerCase()
+  const ownWallet = ownAddress || ownAlias
   const insufficient = balance !== null && pendingPayment.amount > balance
-  $('#transfer-error').textContent = insufficient
-    ? 'Saldo insuficiente'
-    : recipient && !validAddress && !validAlias
-      ? 'Ingresá un alias o dirección válida'
-      : ''
+
+  let error = ''
+  if (ownWallet) error = 'No podés transferirte dinero a tu propia cuenta'
+  else if (insufficient) error = 'Saldo insuficiente'
+  else if (recipient && !validAddress && !validAlias) {
+    error = 'Ingresá un alias o dirección válida'
+  }
+
+  $('#transfer-error').textContent = error
   $('#review-payment').disabled =
-    (!validAddress && !validAlias) || pendingPayment.amount <= 0 || insufficient
+    (!validAddress && !validAlias) ||
+    ownWallet ||
+    pendingPayment.amount <= 0 ||
+    insufficient
 }
 
 function useScannedQr(data) {
@@ -355,6 +419,10 @@ async function reviewPayment() {
       $('#confirm-address').textContent = pendingPayment.recipientLabel
     }
 
+    if (pendingPayment.recipientAddress === wallet.address) {
+      throw new Error('No podés transferirte dinero a tu propia cuenta')
+    }
+
     $('#transfer-error').textContent = 'Calculando costo de servicio...'
     const totalBaseUnits = BigInt(Math.round(pendingPayment.amount * 1_000_000))
     const quote = await quotePayment(
@@ -408,15 +476,92 @@ async function submitPayment() {
   }
 }
 
-async function loadActivity() {
-  const container = $('#activity-result')
-  container.innerHTML = '<b>Cargando...</b>'
+function createActivityItem(transaction) {
+  const incoming = transaction.direction === 'incoming'
+  const status = {
+    confirmed: 'Confirmada',
+    pending: 'Pendiente',
+    failed: 'Fallida'
+  }[transaction.status] || transaction.status
+  const date = new Date(transaction.recordedAt).toLocaleString('es-AR', {
+    dateStyle: 'short',
+    timeStyle: 'short'
+  })
+
+  const item = document.createElement('article')
+  item.className = `activity-item ${transaction.direction}`
+
+  const icon = document.createElement('span')
+  icon.className = 'activity-icon'
+  icon.textContent = incoming ? '↓' : '↑'
+
+  const description = document.createElement('div')
+  const contact = document.createElement('b')
+  const details = document.createElement('small')
+  contact.textContent = transaction.alias
+    ? `@${transaction.alias}`
+    : 'Wallet externa'
+  details.textContent = `${status} · ${date}`
+  description.append(contact, details)
+
+  const values = document.createElement('div')
+  values.className = 'activity-values'
+  const amount = document.createElement('b')
+  amount.textContent =
+    (incoming ? '+ ' : '- ') + money(Number(transaction.amount) / 1_000_000)
+  values.append(amount)
+  if (!incoming && Number(transaction.fee) > 0) {
+    const fee = document.createElement('small')
+    fee.textContent = `Servicio: ${money(Number(transaction.fee) / 1_000_000)}`
+    values.append(fee)
+  }
+
+  item.append(icon, description, values)
+  return item
+}
+
+async function loadHomeActivity() {
+  if (homeActivityLoading) return
+  homeActivityLoading = true
+  const loaded = await loadActivity(
+    'home-activity-result',
+    3,
+    !homeActivityLoaded
+  )
+  if (loaded) homeActivityLoaded = true
+  lastHomeActivityRefresh = Date.now()
+  homeActivityLoading = false
+}
+
+async function loadActivity(
+  containerId = 'activity-result',
+  limit = Infinity,
+  showLoading = true
+) {
+  const container = $(`#${containerId}`)
+  if (showLoading) {
+    container.className = 'card empty'
+    container.innerHTML = '<b>Cargando...</b>'
+  }
   try {
     const transactions = await getTransactions()
-    container.textContent = JSON.stringify(transactions)
-  } catch {
-    container.innerHTML =
-      '<b>Historial no disponible</b><p>WDK todavía no permite consultar la lista de movimientos de esta cuenta.</p>'
+    if (!transactions.length) {
+      container.innerHTML =
+        '<b>Todavía no hay movimientos</b><p>Cuando envíes o recibas dinero aparecerá acá.</p>'
+      return true
+    }
+    container.className = 'activity-list'
+    container.replaceChildren(
+      ...transactions.slice(0, limit).map(createActivityItem)
+    )
+    return true
+  } catch (error) {
+    if (recoverExpiredSession(error)) return false
+    if (showLoading) {
+      container.innerHTML = '<b>No pudimos cargar la actividad</b><p></p>'
+      container.querySelector('p').textContent = error.message
+    }
+    return false
   }
 }
 

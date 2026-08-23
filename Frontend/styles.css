@@ -1,13 +1,15 @@
 :root {
-  --bg: #fff7f1;
-  --card: #fff;
-  --ink: #30221c;
-  --muted: #846f65;
-  --orange: #e99a68;
-  --orange-dark: #a95025;
-  --soft: #ffeadc;
-  --line: #f0ddd1;
-  --red: #b34444;
+  --bg: #fff7ef;
+  --card: #ffffff;
+  --ink: #19130f;
+  --muted: #6d5a4c;
+  --orange: #f97316;
+  --orange-dark: #c2410c;
+  --balance: #21140d;
+  --soft: #fff0e5;
+  --line: #ead6c7;
+  --red: #b42318;
+  --red-line: #f4b4a8;
 }
 
 * {
@@ -16,7 +18,7 @@
 
 body {
   margin: 0;
-  background: #eadfd8;
+  background: #f4e8df;
   color: var(--ink);
   font:
     15px system-ui,
@@ -94,7 +96,6 @@ small {
   margin: auto;
   overflow: hidden;
   background: var(--bg);
-  box-shadow: 0 0 40px #30221c22;
 }
 .screen {
   display: none;
@@ -121,14 +122,14 @@ small {
   text-align: center;
 }
 .card {
+  border: 1px solid var(--line);
   border-radius: 20px;
   padding: 20px;
   background: var(--card);
 }
 
 .welcome {
-  background:
-    radial-gradient(circle at 90% 12%, #ffd9bf 0, transparent 34%), var(--bg);
+  background: var(--bg);
 }
 .brand {
   display: flex;
@@ -274,12 +275,12 @@ nav button {
   flex-direction: column;
   padding: 24px;
   border-radius: 26px;
-  background: var(--ink);
+  background: var(--balance);
   color: #fff;
 }
 .balance span,
 .balance small {
-  color: #d7c8c1;
+  color: #ffffff;
 }
 .balance strong {
   margin: 18px 0 7px;
@@ -292,17 +293,25 @@ nav button {
 .actions button {
   width: 50%;
 }
+.actions button:not(.primary) {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+}
 .section-title {
   margin: 28px 0 10px;
 }
 .section-title button {
   padding: 5px;
-  color: var(--orange-dark);
+  color: var(--orange);
   background: none;
 }
 .empty {
   color: var(--muted);
   text-align: center;
+}
+.empty b {
+  color: var(--ink);
 }
 .empty p {
   margin-bottom: 0;
@@ -362,7 +371,7 @@ nav button {
   border: 3px solid #fff;
   border-radius: 22px;
   content: "";
-  box-shadow: 0 0 0 999px #30221c66;
+  outline: 999px solid #21140dcc;
 }
 .scanner-frame span {
   position: absolute;
@@ -453,6 +462,89 @@ nav button {
   margin-top: 8px;
 }
 
+.activity-list {
+  display: grid;
+  gap: 10px;
+}
+.activity-item {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #fff;
+}
+.activity-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--soft);
+  color: var(--orange-dark);
+  font-size: 21px;
+  font-weight: 800;
+}
+.activity-item > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.activity-item small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.activity-values {
+  justify-items: end;
+  text-align: right;
+}
+.activity-values b {
+  white-space: nowrap;
+}
+.activity-item.incoming .activity-icon,
+.activity-item.incoming .activity-values b {
+  color: #397355;
+}
+
+#balance-status {
+  min-height: 0;
+  margin: 0 auto;
+}
+#balance-status:not(:empty):not(.loading) {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  gap: 10px;
+  margin: 14px auto 4px;
+  border: 1px solid var(--red-line);
+  border-radius: 15px;
+  padding: 10px 14px;
+  background: var(--card);
+  color: var(--red);
+  text-align: left;
+  font-weight: 700;
+}
+#balance-status:not(:empty):not(.loading)::before {
+  display: grid;
+  width: 23px;
+  height: 23px;
+  flex: 0 0 23px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--red);
+  color: #fff;
+  content: "!";
+  font-size: 14px;
+  font-weight: 800;
+}
+#balance-status.loading {
+  margin-top: 10px;
+  color: var(--muted);
+}
+
 footer {
   position: fixed;
   z-index: 2;
@@ -478,7 +570,7 @@ footer button span {
   font-size: 11px;
 }
 footer .selected {
-  color: var(--orange-dark);
+  color: var(--orange);
 }
 
 @keyframes spin {
@@ -490,6 +582,7 @@ footer .selected {
   .phone {
     min-height: 900px;
     margin: 25px auto;
+    border: 1px solid var(--line);
     border-radius: 30px;
   }
   .screen {
